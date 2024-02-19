@@ -1,6 +1,8 @@
 import std/httpclient
 import std/parsecfg
 import std/json
+import htmlgen
+import jester
 
 const
   appId: string = ""
@@ -20,23 +22,21 @@ type
   AppCommandType = enum
     CHAT_INPUT = 1, USER = 2, MESSAGE = 3
 
-var testJson: JsonNode = parseJson("""
-    "name": "test",
-    "type": 2
-""")
 
 proc addCommand(client: HttpClient, command: JsonNode) {.discardable.} = 
-  if client.post(discordEndpoint & appId & "/guilds/" & guildId & "/commands", body = $testJson).code == Http200:
+  if client.post(discordEndpoint & appId & "guilds" & guildId & "/commands", body = $command).code == Http200:
     echo "[+] Commands added!"
     return
   echo "[!] Failed adding commands!"
 
 proc deleteCommand(client: HttpClient, commandId: string) {.discardable.} =
-  if client.delete(discordEndpoint & appId & "/guilds/" & guildId & "/commands/" & commandId).code == Http200:
+  if client.delete(discordEndpoint & appId & "guilds" & guildId & "/commands/" & commandId).code == Http200:
     echo "[+] Commands added!"
     return
   echo "[!] Failed adding commands!"
 
-client.addCommand(testJson)
 
-
+# Jester handels responding to commands
+routes:
+  get "/":
+    resp "awd"
