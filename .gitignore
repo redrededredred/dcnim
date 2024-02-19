@@ -2,3 +2,8 @@ nimcache/
 nimblecache/
 htmldocs/
 bot.ini
+src/bot.ini
+bin/bot.ini
+bot.exe
+src/bot.exe
+bin/bot.exe
