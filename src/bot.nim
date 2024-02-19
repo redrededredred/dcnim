@@ -13,7 +13,8 @@ const
 
 let
   config: Config = loadConfig("bot.ini")
-  token: string = config.getSectionValue("Package", "token")
+  token: string = config.getSectionValue("Secrets", "token")
+  pubKey: string = config.getSectionValue("Secrets", "pubkey")
   authHeaders = newHttpHeaders({
     "Authorization": "Bot " & token
   })
@@ -45,5 +46,6 @@ routes:
   post "/":
     let discordJson = parseJson(request.body)
     if discordJson["type"].getInt == 1:
+      resp.setHeader({"awd": "awd"})
       resp %*[{"type": 1}]
   
