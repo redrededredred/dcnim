@@ -3,6 +3,7 @@ import std/parsecfg
 import std/json
 import htmlgen
 import jester
+import ed25519
 
 const
   appId: string = ""
@@ -37,6 +38,12 @@ proc deleteCommand(client: HttpClient, commandId: string) {.discardable.} =
 
 
 # Jester handels responding to commands
+
 routes:
   get "/":
-    resp "awd"
+    resp %*[{ "name": 2, "age": 30 }]
+  post "/":
+    let discordJson = parseJson(request.body)
+    if discordJson["type"].getInt == 1:
+      resp %*[{"type": 1}]
+  
