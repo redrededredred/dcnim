@@ -39,3 +39,4 @@ proc deleteCommand(client: HttpClient, commandId: string) {.discardable.} =
 
 client.addCommand(testJson)
 
+
