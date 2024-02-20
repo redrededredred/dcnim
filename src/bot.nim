@@ -48,6 +48,32 @@ proc deleteCommand(client: HttpClient, commandId: string) {.discardable.} =
     return
   echo "[!] Failed adding commands!"
 
+proc getCommand(client: HttpClient, commandId: string): JsonNode =
+  let response: Response = client.get(discordEndpoint & appId & "guilds" & guildId & "/commands/" & commandId)
+  if response.code == Http200:
+    result = %*response.body
+    echo "[+] Fetched all commands!"
+    return
+  echo "[!] Failed fetching commands!"
+  return %*[]
+
+proc getCommand(client: HttpClient): JsonNode =
+  let response: Response = client.get(discordEndpoint & appId & "guilds" & guildId & "/commands")
+  if response.code == Http200:
+    result = %*response.body
+    echo "[+] Fetched all commands!"
+    return
+  echo "[!] Failed fetching commands!"
+  return %*[]
+
+proc editCommand(client: HttpClient, commandId: string, command: JsonNode): JsonNode =
+  let response: Response = client.patch(discordEndpoint & appId & "guilds" & guildId & "/commands/" & commandId, body = $command)
+  if response.code == Http200:
+    result = %*response.body
+    echo "[+] Fetched all commands!"
+    return
+  echo "[!] Failed fetching commands!"
+  return %*[]
 
 # Jester handels responding to commands
 routes:
