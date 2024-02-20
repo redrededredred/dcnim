@@ -11,6 +11,7 @@ const
   guildId: string = ""
   discordEndpoint: string = 
     "https://discord.com/api/v10/applications/"
+  debug: bool = true
 
 let
   config: Config = loadConfig("bot.ini")
@@ -24,6 +25,15 @@ let
 type
   AppCommandType = enum
     CHAT_INPUT = 1, USER = 2, MESSAGE = 3
+  InteractionCallbackType = enum
+    PONG = 1,
+    CHANNEL_MESSAGE_WITH_SOURCE = 4,
+    DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5,
+    DEFERRED_UPDATE_MESSAGE = 6,
+    UPDATE_MESSAGE = 7
+    APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8
+    MODAL = 9
+    PREMIUM_REQUIRED = 10
   Bytearray = array[64, byte]
   Pubkeyarray = array[32, byte]
 
@@ -75,6 +85,8 @@ proc editCommand(client: HttpClient, commandId: string, command: JsonNode): Json
   echo "[!] Failed fetching commands!"
   return %*[]
 
+when debug:
+  echo InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE.ord
 # Jester handels responding to commands
 routes:
   post "/":
@@ -82,11 +94,11 @@ routes:
       signatureRecived: string = request.headers["X-Signature-Ed25519"]
       timestampRecived: string = request.headers["X-Signature-Timestamp"]
       discordJson: JsonNode = parseJson(request.body)
-      isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray(pubKey)))
+      # TODO: fix pubkey cancer
+      isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray("FF")))
 
     if not isVerfied:
       resp(Http401)
-    elif discordJson["type"].getInt == 1:
-      resp(Http200, $(%*[{"type": 1}]))
-    resp($(%*[{"type": 4,"data": {"content": "Congrats on sending your command!"}]))
-  
+    elif discordJson["type"].getInt == InteractionCallbackType.PONG.ord:
+      resp(Http200, $(%*[{"type": InteractionCallbackType.PONG.ord}]))
+    resp($(%*[{"type": InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE.ord,"data": {"content": "Woah it works!"}}]))
