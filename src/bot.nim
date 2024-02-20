@@ -25,9 +25,14 @@ type
   AppCommandType = enum
     CHAT_INPUT = 1, USER = 2, MESSAGE = 3
   Bytearray = array[64, byte]
+  Pubkeyarray = array[32, byte]
 
 # This is just plain retarded....
 proc StrToByteArray(s: string): Bytearray =
+  for i, b in toOpenArrayByte(s, 0, s.len - 1):
+    result[i] = b
+
+proc StrToPubkeyArray(s: string): Pubkeyarray =
   for i, b in toOpenArrayByte(s, 0, s.len - 1):
     result[i] = b
 
@@ -45,19 +50,17 @@ proc deleteCommand(client: HttpClient, commandId: string) {.discardable.} =
 
 
 # Jester handels responding to commands
-
 routes:
-  get "/":
-    resp %*[{ "name": 2, "age": 30 }]
   post "/":
     let
       signatureRecived: string = request.headers["X-Signature-Ed25519"]
       timestampRecived: string = request.headers["X-Signature-Timestamp"]
       discordJson: JsonNode = parseJson(request.body)
-      isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToByteArray(pubKey)))
+      isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray(pubKey)))
 
     if not isVerfied:
       resp(Http401)
     elif discordJson["type"].getInt == 1:
-      resp(Http200,  {"Access-Control-Allow-Origin":"*"}, $(%*[{"type": 1}]))
+      resp(Http200, $(%*[{"type": 1}]))
+    resp($(%*[{"type": 4,"data": {"content": "Congrats on sending your command!"}]))
   
