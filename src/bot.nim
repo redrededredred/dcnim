@@ -95,7 +95,8 @@ routes:
       timestampRecived: string = request.headers["X-Signature-Timestamp"]
       discordJson: JsonNode = parseJson(request.body)
       # TODO: fix pubkey cancer
-      isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray("FF")))
+    
+    var isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray("0a6e2ac7057efb5c6c4d7926667cae493bcbcb0ac947b1ccb094e66e59308991")))
 
     if not isVerfied:
       resp(Http401)
