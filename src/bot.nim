@@ -12,11 +12,11 @@ const
   discordEndpoint: string = 
     "https://discord.com/api/v10/applications/"
   debug: bool = true
+  
 
 let
   config: Config = loadConfig("bot.ini")
   token: string = config.getSectionValue("Secrets", "token")
-  pubKey: string = config.getSectionValue("Secrets", "pubkey")
   authHeaders = newHttpHeaders({
     "Authorization": "Bot " & token
   })
@@ -38,13 +38,16 @@ type
   Pubkeyarray = array[32, byte]
 
 # This is just plain retarded....
-proc StrToByteArray(s: string): Bytearray =
+proc strToByteArray(s: string): Bytearray =
   for i, b in toOpenArrayByte(s, 0, s.len - 1):
     result[i] = b
 
-proc StrToPubkeyArray(s: string): Pubkeyarray =
+proc strToPubkeyArray(s: string): Pubkeyarray =
   for i, b in toOpenArrayByte(s, 0, s.len - 1):
     result[i] = b
+
+proc verfiyDiscord(msg, sig, key: string): bool = 
+  result = verify(msg, strToByteArray(sig), strToPubkeyArray(key))
 
 proc addCommand(client: HttpClient, command: JsonNode) {.discardable.} = 
   if client.post(discordEndpoint & appId & "guilds" & guildId & "/commands", body = $command).code == Http200:
@@ -85,8 +88,8 @@ proc editCommand(client: HttpClient, commandId: string, command: JsonNode): Json
   echo "[!] Failed fetching commands!"
   return %*[]
 
-when debug:
-  echo InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE.ord
+
+
 # Jester handels responding to commands
 routes:
   post "/":
@@ -94,11 +97,11 @@ routes:
       signatureRecived: string = request.headers["X-Signature-Ed25519"]
       timestampRecived: string = request.headers["X-Signature-Timestamp"]
       discordJson: JsonNode = parseJson(request.body)
-      # TODO: fix pubkey cancer
-    
-    var isVerfied: bool = verify(message = timestampRecived & $request.body, signature = Signature(StrToByteArray(signatureRecived)), publicKey = PublicKey(StrToPubkeyArray("0a6e2ac7057efb5c6c4d7926667cae493bcbcb0ac947b1ccb094e66e59308991")))
-
-    if not isVerfied:
+      # For some reason this has to be here...
+      config: Config = loadConfig("bot.ini")
+      pubkey: string = config.getSectionValue("Secrets", "pubkey")
+    #echo pubkey
+    if not verfiyDiscord(timestampRecived & $request.body, signatureRecived, pubkey):
       resp(Http401)
     elif discordJson["type"].getInt == InteractionCallbackType.PONG.ord:
       resp(Http200, $(%*[{"type": InteractionCallbackType.PONG.ord}]))
